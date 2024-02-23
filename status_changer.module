@@ -1,0 +1,90 @@
+<?php
+
+
+/**
+* Implements hook_menu().
+*/
+function status_changer_menu() {
+  $items = array();
+
+
+  $items['/node/%nid/edit/status/%tid'] = array(
+    'title'            => 'Change Status',
+    'description'      => 'Change Status of Application',
+    'page callback'    => 'status_changer_save_destination',
+    'page arguments'   => array(1),
+    'access arguments' => array('change status'),
+    'type'             => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+* Implements hook_permission().
+*/
+function status_changer_permission() {
+  return array(
+    'change status' => array(
+      'title' => t('Change Status'),
+      'description' => t('Allows the ability to change status of Applications via a URL (/node/%nid/edit/status/%tid).'),
+      'restrict access' => TRUE,
+    ),
+  );
+}
+
+/**
+* Implements hook_views_api().
+*/
+function status_changer_views_api() {
+  return array(
+    'api' => 3,
+    'path' => backdrop_get_path('module', 'status_changer') . '/views',
+  );
+}
+
+/**
+ * Implements hook_autoload_info().
+ */
+function status_changer_autoload_info() {
+  return array (
+    'views_handler_field_node_link_changestatus' => 'views/views_handler_field_node_link_changestatus.inc',
+ 
+  );
+}
+
+
+function status_changer_save_destination($node) {
+  if (user_access('change status')) {
+    $_SESSION['status_changer_destination'] = $_SERVER['HTTP_REFERER'];
+    return backdrop_get_form('status_changer_confirm', $node);
+  }
+  else {
+    backdrop_access_denied();
+  }
+}
+
+
+function status_changer_confirm($form, $form_state, $node) {
+  $form['#node'] = $node;
+  return confirm_form($form,
+    t('Are you sure you want to change status on %node-title?', array(
+      '%node-title' => $node->title)),
+    $_SESSION['status_changer_destination'],
+    (user_access('change status') ? t('This action can be undone.') : t('This action cannot be undone.')),
+    t('Change'),
+    t('Cancel')
+  );
+}
+
+function status_changer_confirm_submit($form, &$form_state) {
+  $node = $form['#node'];
+  if ($form_state['values']['confirm']) {
+    //change status to the TID sent, then save node
+    node_save($node);
+  }
+
+  backdrop_goto('<front>');
+}
+
+

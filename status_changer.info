@@ -1,0 +1,11 @@
+name = Status Changer
+description = Change the status of Applications with a handy menu
+backdrop = 1.x
+type = module
+
+package = Torch
+tags[] = Views
+tags[] = Content
+tags[] = Content Management
+
+
